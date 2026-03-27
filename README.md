@@ -19,4 +19,6 @@ Of course, in such a big ecosystem as Linux, it is not possible to write wrapper
 ## Contribute
 (WIP)
 ## Donate
-If you would like to support me financially, you can "BuyMeACoffie". Click on "Buy Me a Coffie" on the Sponsors tab.
+If you would like to support me financially, you may "Buy Me a Coffee":
+
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/gbraad)
