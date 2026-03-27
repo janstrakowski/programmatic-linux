@@ -21,4 +21,4 @@ Of course, in such a big ecosystem as Linux, it is not possible to write wrapper
 ## Donate
 If you would like to support me financially, you may "Buy Me a Coffee":
 
-[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/gbraad)
+[!["Buy Me A Coffee"](https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png)](https://www.buymeacoffee.com/janstrakowski)
