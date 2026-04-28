@@ -1,35 +1,106 @@
 uint32_t mkdirs(const char *path, mode_t mode) {
-  const char *lastslashpos;
+  const char *lastslashpos = path;
   char currentpath[PATH_MAX];
   while (1) {
-    lastslashpos = strchr(path, '/');
+    lastslashpos = strchr(lastslashpos, '/');
     if (lastslashpos == NULL) {
       strcpy(currentpath, path);
     } else {
       strncpy(currentpath, path, (int32_t) (lastslashpos - path));
       currentpath[(int32_t) (lastslashpos - path)] = '\0';
     }
-    
-    struct stat finfo;
-    if (stat(currentpath, &finfo) == -1) {
-      if (errno != ENOENT) {
-        return -1;
+
+    if (strcmp(currentpath, "") != 0) {
+      struct stat finfo;
+      if (stat(currentpath, &finfo) == -1) {
+        if (errno != ENOENT) {
+          return -1;
+        } else {
+          if (mkdir(currentpath, mode) == -1) {
+            return -1;
+          }
+        }
       } else {
-        if (mkdir(currentpath, mode) == -1) {
+        if (!S_ISDIR(finfo.st_mode)) {
+          errno = ENOTDIR;
           return -1;
         }
       }
-    } else {
-      if (!S_ISDIR(finfo.st_mode)) {
-        errno = ENOTDIR;
-        return -1;
-      }
     }
-
+    
     if (lastslashpos == NULL) {
       break;
     }
     lastslashpos++;
+  }
+  return 0;
+}
+
+# define RMR_KEEPCONTAINER 0x1
+
+int rmr(const char *path, int flags) {
+  struct stat statbuf;
+  if (lstat(path, &statbuf) == -1) {
+    return -1;
+  }
+  if (S_ISREG(statbuf.st_mode) || S_ISLNK(statbuf.st_mode)) {
+    if (unlink(path) == -1) {
+      return -1;
+    }
+  } else if (S_ISDIR(statbuf.st_mode)) {
+    DIR *dstream = opendir(path);
+    if (dstream == NULL) {
+      return -1;
+    }
+    while (1) {
+      errno = 0;
+      struct dirent *dent = readdir(dstream);
+      if (dent == NULL) {
+        if (errno == 0) {
+          break;
+        }
+        if (closedir(dstream) == -1) {
+          return -1;
+        }
+        return -1;
+      }
+
+      if (strcmp(dent->d_name, ".") == 0 ||
+          strcmp(dent->d_name, "..") == 0) {
+        continue;
+      }
+
+      char newpath[PATH_MAX];
+      if (strlen(path) + 1 + strlen(dent->d_name) >= PATH_MAX) {
+        errno = ENAMETOOLONG;
+        if (closedir(dstream) == -1) {
+          return -1;
+        }
+        return -1;
+      }
+      strcpy(newpath, path);
+      strcat(newpath, "/");
+      strcat(newpath, dent->d_name);
+
+      if (rmr(newpath, flags & ~RMR_KEEPCONTAINER) == -1) {
+        if (closedir(dstream) == -1) {
+          return -1;
+        }
+        return -1;
+      }
+    }
+    if (!(flags & RMR_KEEPCONTAINER) && rmdir(path) == -1) {
+      if (closedir(dstream) == -1) {
+        return -1;
+      }
+      return -1;
+    }
+    if (closedir(dstream) == -1) {
+      return -1;
+    }
+  } else {
+    errno = ENOTSUP;
+    return -1;
   }
   return 0;
 }
@@ -98,10 +169,16 @@ pid_t build(
       return -1;
     }
   }
+  if (rmr(dest, RMR_KEEPCONTAINER) == -1) {
+    return -1;
+  }
   if (mkdir(workplace, 0777) == -1) {
     if (errno != EEXIST) {
       return -1;
     }
+  }
+  if (rmr(workplace, RMR_KEEPCONTAINER) == -1) {
+    return -1;
   }
   pid_t pid = fork();
   if (pid == -1) {

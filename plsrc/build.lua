@@ -12,7 +12,7 @@ local ok, err = pcall(function()
   build("/nstsrc", "/nstwkplc", "/dest/nstdest", function()
     print("The sub-builder started.")
     fs.copy("/src/helloworld.txt", "/dest/helloworld.txt")
-    xio.writefile("anotherfile.txt", ")@$&@#$&@#($&@#(")
+    xio.writefile("/dest/anotherfile.txt", ")@$&@#$&@#($&@#(")
   end)
 end)
 
